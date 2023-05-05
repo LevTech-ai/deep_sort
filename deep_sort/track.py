@@ -64,7 +64,7 @@ class Track:
     """
 
     def __init__(self, mean, covariance, track_id, n_init, max_age,
-                 feature=None):
+                 feature=None, class_id=-1):
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
@@ -76,6 +76,12 @@ class Track:
         self.features = []
         if feature is not None:
             self.features.append(feature)
+
+        self.class_id = class_id
+        self.class_conf = 0
+        if class_id >= 0:
+            self.max_class_conf_step = 0.2
+            self.class_conf += self.max_class_conf_step
 
         self._n_init = n_init
         self._max_age = max_age
@@ -143,6 +149,17 @@ class Track:
         self.time_since_update = 0
         if self.state == TrackState.Tentative and self.hits >= self._n_init:
             self.state = TrackState.Confirmed
+
+    def update_track_class(self, class_id, score):
+
+        if class_id == self.class_id:
+            new_conf = self.class_conf + self.max_class_conf_step * score
+            self.class_conf = min(1, new_conf)
+        else:
+            new_conf = self.class_conf - self.max_class_conf_step * score
+            self.class_conf = max(0, new_conf)
+            if self.class_conf < self.max_class_conf_step:
+                self.class_id = class_id
 
     def mark_missed(self):
         """Mark this track as missed (no association at the current time step).
