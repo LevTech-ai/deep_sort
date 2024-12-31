@@ -1,4 +1,5 @@
 # vim: expandtab:ts=4:sw=4
+import collections
 
 
 class TrackState:
@@ -64,7 +65,7 @@ class Track:
     """
 
     def __init__(self, mean, covariance, track_id, n_init, max_age,
-                 feature=None, class_id=-1):
+                 majority_vote_window: int, feature=None, class_id=-1):
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
@@ -85,6 +86,7 @@ class Track:
 
         self._n_init = n_init
         self._max_age = max_age
+        self.person_preds_history = collections.deque(maxlen=majority_vote_window)
 
     def to_tlwh(self):
         """Get current position in bounding box format `(top left x, top left y,
